@@ -1,0 +1,7 @@
+*~
+*.pyc
+__pycache__/
+export/*
+!mg_coco_s2.pth
+!sp_v1.pth
+data/*
