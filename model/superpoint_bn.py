@@ -1,14 +1,23 @@
+# -*- coding: utf-8 -*-
+""" model/superpoint_bn.py """
+
 import torch
-import torch.nn as nn
-from solver.nms import box_nms
-from model.modules.cnn.vgg_backbone import VGGBackbone,VGGBackboneBN
+
+from model.modules.cnn.vgg_backbone import VGGBackbone, VGGBackboneBN
 from model.modules.cnn.cnn_heads import DetectorHead, DescriptorHead
+from solver.nms import box_nms
+
+
+__all__ = [
+    'SuperPointBNNet',
+]
+
 
 class SuperPointBNNet(torch.nn.Module):
     """ Pytorch definition of SuperPoint Network. """
 
     def __init__(self, config, input_channel=1, grid_size=8, device='cpu', using_bn=True):
-        super(SuperPointBNNet, self).__init__()
+        super().__init__()
         self.nms = config['nms']
         self.det_thresh = config['det_thresh']
         self.topk = config['topk']
@@ -45,16 +54,16 @@ class SuperPointBNNet(torch.nn.Module):
                             min_prob=self.det_thresh,
                             keep_top_k=self.topk).squeeze(dim=0) for p in prob]
             prob = torch.stack(prob)
-            det_outputs.setdefault('prob_nms',prob)
+            det_outputs.setdefault('prob_nms', prob)
 
-        pred = prob[prob>=self.det_thresh]
+        pred = prob[prob >= self.det_thresh]
         det_outputs.setdefault('pred', pred)
 
         desc_outputs = self.descriptor_head(feat_map)
-        return {'det_info':det_outputs, 'desc_info':desc_outputs}
+        return {'det_info': det_outputs, 'desc_info': desc_outputs}
 
 
-if __name__=='__main__':
+if __name__ == '__main__':
     model = SuperPointBNNet()
     model.load_state_dict(torch.load('../superpoint_bn.pth'))
     print('Done')
