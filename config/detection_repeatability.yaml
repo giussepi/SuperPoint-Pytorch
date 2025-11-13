@@ -1,6 +1,6 @@
 data:
     name: 'hpatches' #hpatches
-    data_dir: 'D:\data\hpatches_sequences'
+    data_dir: './data/hpatches' # 'D:\data\hpatches_sequences'
     export_dir: './data/repeatibility/hpatches/sp_v1'
     alteration: 'v'  # 'all' 'i' 'v'
     preprocessing:
@@ -37,4 +37,3 @@ model:
     nms: 4
     topk: 1000
     det_thresh: 0.001 # 0.001
-
