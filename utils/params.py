@@ -1,11 +1,11 @@
-#-*-coding:utf-8-*-
+# -*- coding: utf-8 -*-
 
-import collections
+from collections.abc import Mapping
 
 
 def parse_primitives(names, all_primitives):
     p = all_primitives if (names == 'all') \
-            else (names if isinstance(names, list) else [names])
+        else (names if isinstance(names, list) else [names])
     assert set(p) <= set(all_primitives)
     return p
 
@@ -21,7 +21,7 @@ def dict_update(d, u):
         The updated dictionary.
     """
     for k, v in u.items():
-        if isinstance(v, collections.Mapping):
+        if isinstance(v, Mapping):
             d[k] = dict_update(d.get(k, {}), v)
         else:
             d[k] = v

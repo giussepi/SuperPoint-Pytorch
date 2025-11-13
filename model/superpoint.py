@@ -1,4 +1,5 @@
-# -*-coding:utf8-*-
+# -*- coding: utf-8 -*-
+
 import torch
 import torch.nn.functional as F
 import numpy as np
@@ -10,6 +11,7 @@ class SuperPointNet(torch.nn.Module):
     The magicleap definition of SuperPoint Network.
     Mainly for debug or export homography adaptations
     """
+
     def __init__(self, input_channel=1, grid_size=8):
         super(SuperPointNet, self).__init__()
 
@@ -68,7 +70,7 @@ class SuperPointNet(torch.nn.Module):
         prob = prob[:, :-1, :, :]  # remove dustbin,[B,64,H,W]
         # Reshape to get full resolution heatmap.
         prob = pixel_shuffle(prob, self.grid_size)  # [B,1,H*8,W*8]
-        prob = prob.squeeze(dim=1)#[B,H,W]
+        prob = prob.squeeze(dim=1)  # [B,H,W]
 
         # Descriptor Head, useless for export image key points
         cDa = self.relu(self.convDa(x))
@@ -80,8 +82,6 @@ class SuperPointNet(torch.nn.Module):
         desc = F.interpolate(desc_raw, scale_factor=self.grid_size, mode='bilinear', align_corners=False)
         desc = F.normalize(desc, p=2, dim=1)  # normalize by channel
 
-        prob = {'logits':semi, 'prob':prob}
-        desc = {'desc_raw':desc_raw, 'desc':desc}
+        prob = {'logits': semi, 'prob': prob}
+        desc = {'desc_raw': desc_raw, 'desc': desc}
         return prob, desc
-
-

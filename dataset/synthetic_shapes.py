@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 import random
 
 import torch
@@ -77,7 +79,7 @@ class SyntheticShapes(Dataset):
         self.config = dict_update(getattr(self, 'default_config', {}), config)
         self.task = task if isinstance(task, (list, tuple)) else [task, ]
         self.photo_aug = PhotoAugmentor(config['augmentation']['photometric'])
-        #load data, if no data generate some
+        # load data, if no data generate some
         self.samples = self._init_dataset()
 
     def dump_primitive_data(self, primitive):
@@ -89,18 +91,18 @@ class SyntheticShapes(Dataset):
             im_dir.mkdir(parents=True, exist_ok=True)
             pts_dir.mkdir(parents=True, exist_ok=True)
 
-            for i in tqdm(range(size),desc='Generate {}({})'.format(primitive, split)):
+            for i in tqdm(range(size), desc='Generate {}({})'.format(primitive, split)):
                 image = synthetic_dataset.generate_background(
-                        self.config['generation']['image_size'],
-                        **self.config['generation']['params']['generate_background'])
+                    self.config['generation']['image_size'],
+                    **self.config['generation']['params']['generate_background'])
                 points = np.array(getattr(synthetic_dataset, primitive)(
-                        image, **self.config['generation']['params'].get(primitive, {})))
+                    image, **self.config['generation']['params'].get(primitive, {})))
                 points = np.flip(points, 1)  # reverse convention with opencv
 
                 b = self.config['preprocessing']['blur_size']
                 image = cv2.GaussianBlur(image, (b, b), 0)
-                points = (points * np.array(self.config['preprocessing']['resize'], np.float)
-                          / np.array(self.config['generation']['image_size'], np.float))
+                points = (points * np.array(self.config['preprocessing']['resize'], float)
+                          / np.array(self.config['generation']['image_size'], float))
                 image = cv2.resize(image, tuple(self.config['preprocessing']['resize'][::-1]),
                                    interpolation=cv2.INTER_LINEAR)
 
@@ -118,7 +120,7 @@ class SyntheticShapes(Dataset):
         for primitive in primitives:
             primitive_dir = Path(self.config['data_dir'], primitive)
             if not primitive_dir.exists():
-                #try generate data
+                # try generate data
                 self.dump_primitive_data(primitive)
             # Gather filenames in all splits, optionally truncate
             truncate = self.config['truncate'].get(primitive, 1)
@@ -135,7 +137,6 @@ class SyntheticShapes(Dataset):
     def __len__(self,):
         return len(self.samples)
 
-
     def on_the_fly(self,):
         primitives = parse_primitives(self.config['primitives'], self.drawing_primitives)
         primitive = random.choice(primitives)
@@ -144,7 +145,7 @@ class SyntheticShapes(Dataset):
             **self.config['generation']['params']['generate_background'])
         points = np.array(getattr(synthetic_dataset, primitive)(
             image, **self.config['generation']['params'].get(primitive, {})))
-        points = np.flip(points, 1)#reverse convention with opencv
+        points = np.flip(points, 1)  # reverse convention with opencv
 
         b = self.config['preprocessing']['blur_size']
         image = cv2.GaussianBlur(image, (b, b), 0)
@@ -155,14 +156,13 @@ class SyntheticShapes(Dataset):
 
         return image, points
 
-
     def __getitem__(self, idx):
 
         if not self.config['on-the-fly']:
             img_path = self.samples[idx]['image']
             pts_path = self.samples[idx]['point']
-            img = cv2.imread(img_path,cv2.IMREAD_GRAYSCALE)#shape=(h,w)
-            pts = np.load(pts_path)  #  (y,x) formated vector
+            img = cv2.imread(img_path, cv2.IMREAD_GRAYSCALE)  # shape=(h,w)
+            pts = np.load(pts_path)  # (y,x) formated vector
         else:
             img, pts = self.on_the_fly()
 
@@ -173,27 +173,26 @@ class SyntheticShapes(Dataset):
         # cv2.waitKey()
         # print(pts)
 
+        H, W = img.shape
 
-        H,W = img.shape
-
-        if self.config['augmentation']['photometric']['enable']:#image augmentation
+        if self.config['augmentation']['photometric']['enable']:  # image augmentation
             img = self.photo_aug(img)
-            pts_map = compute_keypoint_map(pts, (H,W))
-            valid_mask = np.ones((H,W),dtype=int)
-            homography = np.eye(3,dtype=np.float32)
+            pts_map = compute_keypoint_map(pts, (H, W))
+            valid_mask = np.ones((H, W), dtype=int)
+            homography = np.eye(3, dtype=np.float32)
 
-        if self.config['augmentation']['homographic']['enable']:##homographic augmentation
-            img, pts, pts_map, valid_mask, homography = homographic_aug_pipline(img, pts, self.config['augmentation']['homographic'])
+        if self.config['augmentation']['homographic']['enable']:  # homographic augmentation
+            img, pts, pts_map, valid_mask, homography = homographic_aug_pipline(
+                img, pts, self.config['augmentation']['homographic'])
 
-
-        data = {'raw':{'img':img.astype(np.float32),#H,W
-                       'kpts':pts.astype(np.float32),#N,2, yx format
-                       'kpts_map':pts_map,#H,W
-                       'mask':valid_mask,#H,W
+        data = {'raw': {'img': img.astype(np.float32),  # H,W
+                        'kpts': pts.astype(np.float32),  # N,2, yx format
+                        'kpts_map': pts_map,  # H,W
+                        'mask': valid_mask,  # H,W
                         },
-                'homography': homography}#3,3
+                'homography': homography}  # 3,3
 
-        ##normalize
+        # normalize
         data['raw']['img'] = data['raw']['img']/255.
 
         return data
@@ -206,8 +205,8 @@ class SyntheticShapes(Dataset):
         so will be kept as list
         :return:
         """
-        assert(len(samples)>0 and isinstance(samples[0], dict))
-        batch = {'raw':{'img':[], 'kpts':[], 'kpts_map':[], 'mask':[]}, 'homography':[]}
+        assert (len(samples) > 0 and isinstance(samples[0], dict))
+        batch = {'raw': {'img': [], 'kpts': [], 'kpts_map': [], 'mask': []}, 'homography': []}
 
         for item in samples:
             batch['raw']['img'].append(item['raw']['img'])
@@ -216,22 +215,23 @@ class SyntheticShapes(Dataset):
             batch['raw']['mask'].append(item['raw']['mask'])
             batch['homography'].append(item['homography'])
 
-        batch['raw']['img'] = np.stack(batch['raw']['img'])#BHW
-        batch['raw']['kpts_map'] = np.stack(batch['raw']['kpts_map'])#BHW
-        batch['raw']['mask'] = np.stack(batch['raw']['mask'])#BHW
-        batch['homography'] = np.stack(batch['homography'])#BHW
+        batch['raw']['img'] = np.stack(batch['raw']['img'])  # BHW
+        batch['raw']['kpts_map'] = np.stack(batch['raw']['kpts_map'])  # BHW
+        batch['raw']['mask'] = np.stack(batch['raw']['mask'])  # BHW
+        batch['homography'] = np.stack(batch['homography'])  # BHW
 
-        #to tensor
-        batch['raw']['img'] = torch.tensor(batch['raw']['img'][:,np.newaxis,:,:], dtype=torch.float32, device=self.device)#B1HW
-        batch['raw']['kpts_map'] = torch.tensor(batch['raw']['kpts_map'], dtype=torch.float32, device=self.device)#BHW
-        batch['raw']['mask'] = torch.tensor(batch['raw']['mask'], dtype=torch.float32, device=self.device)#BHW
-        batch['homography'] = torch.tensor(batch['homography'], dtype=torch.float32, device=self.device)#B33
+        # to tensor
+        batch['raw']['img'] = torch.tensor(batch['raw']['img'][:, np.newaxis, :, :],
+                                           dtype=torch.float32, device=self.device)  # B1HW
+        batch['raw']['kpts_map'] = torch.tensor(
+            batch['raw']['kpts_map'], dtype=torch.float32, device=self.device)  # BHW
+        batch['raw']['mask'] = torch.tensor(batch['raw']['mask'], dtype=torch.float32, device=self.device)  # BHW
+        batch['homography'] = torch.tensor(batch['homography'], dtype=torch.float32, device=self.device)  # B33
 
         return batch
 
 
-
-if __name__=="__main__":
+if __name__ == "__main__":
     import yaml
     from torch.utils.data import DataLoader
     import matplotlib.pyplot as plt
@@ -255,7 +255,7 @@ if __name__=="__main__":
         ##
         kpts = np.where(d['raw']['kpts_map'][0].squeeze().cpu().numpy())
         kpts = np.vstack(kpts).T
-        kpts = np.round(kpts).astype(np.int)
+        kpts = np.round(kpts).astype(int)
         for kp in kpts:
             cv2.circle(img, (kp[1], kp[0]), radius=3, color=(0, 255, 0))
         print("points on the image")
@@ -269,4 +269,3 @@ if __name__=="__main__":
         plt.imshow(mask)
         plt.show()
         print("show one")
-

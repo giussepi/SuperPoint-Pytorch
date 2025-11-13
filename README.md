@@ -1,6 +1,4 @@
-See a new version [here](https://github.com/shaofengzeng/SuperPoint-Pytorch/tree/np_version).
-
-# ~~SuperPoint-Pytorch (A Pure Pytorch Implementation)~~
+# SuperPoint-Pytorch (A Pure Pytorch Implementation)
 SuperPoint: Self-Supervised Interest Point Detection and Description  
 
 
