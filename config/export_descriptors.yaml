@@ -1,6 +1,6 @@
 data:
     name: 'hpatches'
-    data_dir: 'D:\data\hpatches_sequences'
+    data_dir: './data/hpatches' # 'D:\data\hpatches_sequences'
     export_dir: './data/descriptors/hpatches/sp_v1/'
     alteration: 'v'  # 'all' 'i' 'v'
     preprocessing:
